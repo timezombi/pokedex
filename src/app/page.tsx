@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 const REGIONS = [
   { name: "Kanto", map: "/regions/kanto.png" },
@@ -179,6 +179,47 @@ const POKEMON = [
   })),
 ];
 
+// Individual Pokemon Card Component with optimized loading and animations
+function PokemonCard({ pokemon, index }: { pokemon: { id: number; name: string; region: string; sprite: string }; index: number }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Stagger the visibility based on index for smooth animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, index * 20); // Slightly slower for smoother effect
+
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  return (
+    <div
+      className={`flex flex-col items-center p-1 transition-all duration-500 ${
+        isVisible && isLoaded 
+          ? 'opacity-100 transform scale-100 translate-y-0' 
+          : 'opacity-0 transform scale-75 translate-y-8'
+      }`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={pokemon.sprite}
+        alt={pokemon.name}
+        className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-lg transition-all duration-300 hover:scale-110 hover:drop-shadow-2xl"
+        loading="lazy"
+        onLoad={() => {
+          // Small delay to ensure smooth animation
+          setTimeout(() => setIsLoaded(true), 100);
+        }}
+        onError={() => {
+          // Handle missing images gracefully
+          setIsLoaded(true);
+        }}
+      />
+    </div>
+  );
+}
+
 export default function Home() {
   const [region, setRegion] = useState("Kanto");
   const [bg, setBg] = useState(REGIONS[0].map);
@@ -329,19 +370,12 @@ export default function Home() {
 
         {/* Animated Pokemon Grid */}
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
-          {filtered.map((poke) => (
-            <div
-              key={poke.id}
-              className="flex flex-col items-center p-1 transition-all duration-300 opacity-100 transform scale-100 translate-y-0"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={poke.sprite}
-                alt={poke.name}
-                className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-lg transition-opacity duration-200"
-                loading="lazy"
-              />
-            </div>
+          {filtered.map((poke, idx) => (
+            <PokemonCard 
+              key={poke.id} 
+              pokemon={poke} 
+              index={idx} 
+            />
           ))}
         </div>
       </div>
