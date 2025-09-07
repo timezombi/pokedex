@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 const REGIONS = [
   { name: "Kanto", map: "/regions/kanto.png" },
@@ -329,7 +329,7 @@ export default function Home() {
 
         {/* Animated Pokemon Grid */}
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
-          {filtered.map((poke) => (
+          {filtered.map((poke, idx) => (
             <div
               key={poke.id}
               className="flex flex-col items-center p-1 transition-all duration-300 opacity-100 transform scale-100 translate-y-0"

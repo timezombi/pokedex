@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 const REGIONS = [
   { name: "Kanto", map: "/regions/kanto.png" },
@@ -179,12 +179,54 @@ const POKEMON = [
   })),
 ];
 
+// Individual Pokemon Card Component with optimized loading
+function PokemonCard({ pokemon, index }: { pokemon: { id: number; name: string; region: string; sprite: string }; index: number }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Stagger the visibility based on index
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, index * 15); // Reduced delay for smoother animation
+
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  return (
+    <div
+      className={`flex flex-col items-center p-1 transition-all duration-300 ${
+        isVisible && isLoaded 
+          ? 'opacity-100 transform scale-100 translate-y-0' 
+          : 'opacity-0 transform scale-75 translate-y-8'
+      }`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={pokemon.sprite}
+        alt={`Pokemon ${pokemon.id}`}
+        className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-lg transition-opacity duration-200"
+        loading="lazy"
+        onLoad={() => {
+          // Small delay to ensure smooth animation
+          setTimeout(() => setIsLoaded(true), 50);
+        }}
+        onError={() => {
+          // Handle missing images gracefully
+          setIsLoaded(true);
+        }}
+      />
+    </div>
+  );
+}
+
 export default function Home() {
   const [region, setRegion] = useState("Kanto");
   const [bg, setBg] = useState(REGIONS[0].map);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAllPokemon, setShowAllPokemon] = useState(true);
   const [selectedPokemon, setSelectedPokemon] = useState<Set<number>>(new Set());
+  const [isGridReady, setIsGridReady] = useState(false);
 
   const regionPokemon = useMemo(
     () => POKEMON.filter((p) => p.region === region),
@@ -210,8 +252,24 @@ export default function Home() {
     return pokemon;
   }, [regionPokemon, searchTerm, showAllPokemon, selectedPokemon]);
 
+  // Handle grid readiness for smooth transitions
+  useEffect(() => {
+    setIsGridReady(false);
+    const timer = setTimeout(() => {
+      setIsGridReady(true);
+    }, 100); // Small delay to prevent initial freeze
+
+    return () => clearTimeout(timer);
+  }, [region, searchTerm, showAllPokemon, selectedPokemon]);
+
+  // Debug logging
+  console.log('Current region:', region);
+  console.log('Current bg:', bg);
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start bg-gray-900 text-white overflow-hidden">
+
+      
       {/* Region Map Background */}
       <div
         className="fixed top-0 left-0 w-full h-full bg-cover bg-center opacity-60 transition-all duration-500"
@@ -220,7 +278,6 @@ export default function Home() {
           zIndex: 0
         }}
       />
-      
       <div className="w-full max-w-5xl mx-auto p-4 relative z-10">
         <h1 className="text-3xl font-bold mb-4 text-center drop-shadow-lg">Pokémon Shiny Home Animation Showcase</h1>
         
@@ -229,10 +286,9 @@ export default function Home() {
           {REGIONS.map((r) => (
             <button
               key={r.name}
-              className={`px-3 py-1 rounded-full border border-white/30 transition-all ${
-                region === r.name ? "bg-white text-gray-900 font-bold" : "bg-gray-800 hover:bg-gray-700"
-              }`}
+              className={`px-3 py-1 rounded-full border border-white/30 transition-all ${region === r.name ? "bg-white text-gray-900 font-bold" : "bg-gray-800 hover:bg-gray-700"}`}
               onClick={() => {
+                console.log('Button clicked:', r.name);
                 setRegion(r.name);
                 setBg(r.map);
               }}
@@ -246,13 +302,13 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
           {/* Search Box */}
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by Pokémon name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/60"
-            />
+                          <input
+                type="text"
+                placeholder="Search by Pokémon name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-4 py-2 bg-gray-800 border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/60"
+              />
           </div>
 
           {/* Filter Toggle */}
@@ -328,20 +384,15 @@ export default function Home() {
         )}
 
         {/* Animated Pokemon Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
-          {filtered.map((poke) => (
-            <div
-              key={poke.id}
-              className="flex flex-col items-center p-1 transition-all duration-300 opacity-100 transform scale-100 translate-y-0"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={poke.sprite}
-                alt={poke.name}
-                className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-lg transition-opacity duration-200"
-                loading="lazy"
-              />
-            </div>
+        <div className={`grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2 transition-opacity duration-300 ${
+          isGridReady ? 'opacity-100' : 'opacity-0'
+        }`}>
+          {filtered.map((poke, idx) => (
+            <PokemonCard 
+              key={poke.id} 
+              pokemon={poke} 
+              index={idx} 
+            />
           ))}
         </div>
       </div>
