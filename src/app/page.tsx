@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
-import Image from "next/image";
 
 const REGIONS = [
   { name: "Kanto", map: "/regions/kanto.png" },
@@ -125,7 +124,7 @@ const POKEMON = [
 ];
 
 // Individual Pokemon Card Component with optimized loading
-function PokemonCard({ pokemon, index }: { pokemon: any; index: number }) {
+function PokemonCard({ pokemon, index }: { pokemon: { id: number; name: string; region: string; sprite: string }; index: number }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -146,6 +145,7 @@ function PokemonCard({ pokemon, index }: { pokemon: any; index: number }) {
           : 'opacity-0 transform scale-75 translate-y-8'
       }`}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={pokemon.sprite}
         alt={`Pokemon ${pokemon.id}`}
@@ -313,6 +313,7 @@ export default function Home() {
                       ? 'border-green-400 bg-green-400/20' 
                       : 'border-gray-600 bg-gray-700/50'
                   }`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={poke.sprite}
                       alt={`Pokemon ${poke.id}`}
